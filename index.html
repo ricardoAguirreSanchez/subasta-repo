@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subasta Ping Pong</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        h1, h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 { color: #00d4ff; }
+        h2 { color: #ffd700; margin-top: 40px; }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        th {
+            background: rgba(0,212,255,0.2);
+            color: #00d4ff;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+        }
+        tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+        .nivel-3 { color: #ff6b6b; font-weight: bold; }
+        .nivel-4 { color: #ffd700; font-weight: bold; }
+        .nivel-5 { color: #69db7c; font-weight: bold; }
+        .asistencia-baja { color: #ff8787; }
+        .asistencia-media { color: #ffd43b; }
+        select {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            background: #2d3436;
+            color: #fff;
+            cursor: pointer;
+            width: 100%;
+        }
+        select:focus {
+            outline: 2px solid #00d4ff;
+        }
+        input[type="number"] {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            background: #2d3436;
+            color: #fff;
+            width: 100%;
+        }
+        input[type="number"]:focus {
+            outline: 2px solid #00d4ff;
+        }
+        .capitanes-table td:nth-child(3),
+        .capitanes-table td:nth-child(4) {
+            font-weight: bold;
+        }
+        .positivo { color: #69db7c; }
+        .negativo { color: #ff6b6b; }
+        .base {
+            color: #74c0fc;
+            font-weight: 500;
+        }
+        .vendido {
+            background: rgba(105, 219, 124, 0.1) !important;
+        }
+        .notas {
+            font-size: 0.75em;
+            color: #aaa;
+            max-width: 200px;
+        }
+        .reset-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+        }
+        .reset-btn:hover {
+            background: #c0392b;
+        }
+        .admin-only {
+            display: none;
+        }
+        .is-admin .admin-only {
+            display: inline-block;
+        }
+        .espectador-badge {
+            background: #e74c3c;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+        .admin-badge {
+            background: #27ae60;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+        .readonly-value {
+            color: #74c0fc;
+            font-weight: 500;
+        }
+        .totales {
+            background: rgba(255,215,0,0.1);
+            font-weight: bold;
+        }
+        .totales td {
+            color: #ffd700;
+        }
+        .sync-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+        .sync-online {
+            background: #27ae60;
+            color: white;
+        }
+        .sync-offline {
+            background: #e74c3c;
+            color: white;
+        }
+        .live-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #ff0000;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div id="sync-status" class="sync-status sync-offline">Conectando...</div>
+    
+    <div class="container">
+        <h1>🏓 Subasta Ping Pong <span id="mode-badge"></span></h1>
+        
+        <h2>Jugadores a Subastar</h2>
+        <table id="jugadores-table">
+            <thead>
+                <tr>
+                    <th>Jugador</th>
+                    <th>Nivel</th>
+                    <th>Asistencia</th>
+                    <th>Base</th>
+                    <th>Notas</th>
+                    <th>Comprado por</th>
+                    <th>Precio Final</th>
+                </tr>
+            </thead>
+            <tbody id="jugadores-body">
+            </tbody>
+        </table>
+
+        <h2>Capitanes</h2>
+        <table class="capitanes-table">
+            <thead>
+                <tr>
+                    <th>Capitán</th>
+                    <th>Presupuesto</th>
+                    <th>Gastado</th>
+                    <th>Disponible</th>
+                    <th>Comprados</th>
+                    <th>Faltan</th>
+                </tr>
+            </thead>
+            <tbody id="capitanes-body">
+            </tbody>
+            <tfoot>
+                <tr class="totales">
+                    <td>TOTAL</td>
+                    <td id="total-presupuesto">-</td>
+                    <td id="total-gastado">-</td>
+                    <td id="total-disponible">-</td>
+                    <td id="total-comprados">-</td>
+                    <td id="total-faltan">-</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div id="admin-actions"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <script>
+        const firebaseConfig = __FIREBASE_CONFIG_PLACEHOLDER__;
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const comprasRef = database.ref('compras');
+
+        const jugadores = [
+            { nombre: "Eduardo Espinar", nivel: 5, asistencia: "Baja", base: 100000, notas: "Amigo de la casa, auto que no funciona, crió 2 artrópodos" },
+            { nombre: "Lupe", nivel: 5, asistencia: "Media", base: 100000, notas: "Se burla a los que les gana, Hándicap 10-0" },
+            { nombre: "Leticia", nivel: 5, asistencia: "Media", base: 100000, notas: "Caprichosa, hay que aplicarle disciplina" },
+            { nombre: "Corti Rei", nivel: 4, asistencia: "Media", base: 300000, notas: "Requiere cambio de batería, generoso" },
+            { nombre: "Agustín Antoni", nivel: 5, asistencia: "Baja", base: 150000, notas: "Se enoja cuando pierde, está de vacaciones" },
+            { nombre: "Fernando Amarante", nivel: 4, asistencia: "Media", base: 300000, notas: "Mucho drive, poco revés, salta como canguro" },
+            { nombre: "Agustín Pereda", nivel: 5, asistencia: "Media", base: 100000, notas: "No tiene idea de todo esto" },
+            { nombre: "Fernando Pereda", nivel: 5, asistencia: "Media", base: 100000, notas: "No tiene idea de porque está en este grupo" },
+            { nombre: "Gabriel Alberto", nivel: 5, asistencia: "Media", base: 150000, notas: "Se le pega la paleta a ambas manos" },
+            { nombre: "Matías Alberto", nivel: 4, asistencia: "Media", base: 300000, notas: "Émulo de Alcaraz" },
+            { nombre: "Diego Patrisso", nivel: 3, asistencia: "Media", base: 1000000, notas: "Ex San Lorenzo ⭐" }
+        ];
+
+        const capitanes = [
+            { nombre: "Joako", presupuesto: 2185000, faltan: 2 },
+            { nombre: "Ricki", presupuesto: 10400000, faltan: 1 },
+            { nombre: "César", presupuesto: 10300000, faltan: 2 },
+            { nombre: "Agustín", presupuesto: 4950000, faltan: 1 },
+            { nombre: "Alejandro", presupuesto: 11000000, faltan: 3 },
+            { nombre: "Diego", presupuesto: 16000000, faltan: 3 }
+        ];
+
+        let compras = {};
+        
+        // Detectar modo admin: ?admin=ricardito2026
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAdmin = urlParams.get('admin') === 'ricardito2026';
+        
+        if (isAdmin) {
+            document.body.classList.add('is-admin');
+            document.getElementById('mode-badge').innerHTML = '<span class="admin-badge">ADMIN</span>';
+            const adminActions = document.getElementById('admin-actions');
+            const resetBtn = document.createElement('button');
+            resetBtn.className = 'reset-btn';
+            resetBtn.onclick = resetSubasta;
+            resetBtn.textContent = '🔄 Reiniciar Subasta';
+            adminActions.appendChild(resetBtn);
+        } else {
+            document.getElementById('mode-badge').innerHTML = '<span class="espectador-badge"><span class="live-indicator"></span>EN VIVO</span>';
+        }
+
+        // Escuchar cambios en tiempo real
+        comprasRef.on('value', (snapshot) => {
+            compras = snapshot.val() || {};
+            renderJugadores();
+            renderCapitanes();
+            updateSyncStatus(true);
+        });
+
+        // Estado de conexión
+        database.ref('.info/connected').on('value', (snap) => {
+            updateSyncStatus(snap.val());
+        });
+
+        function updateSyncStatus(online) {
+            const el = document.getElementById('sync-status');
+            if (online) {
+                el.className = 'sync-status sync-online';
+                el.innerHTML = '<span class="live-indicator"></span> En vivo';
+            } else {
+                el.className = 'sync-status sync-offline';
+                el.textContent = '❌ Desconectado';
+            }
+        }
+
+        function formatNumber(num) {
+            return num.toLocaleString('es-AR');
+        }
+
+        function renderJugadores() {
+            const tbody = document.getElementById('jugadores-body');
+            tbody.innerHTML = '';
+            
+            jugadores.forEach((j, idx) => {
+                const compra = compras[idx] || { capitan: '', precio: 0 };
+                const vendido = compra.capitan ? 'vendido' : '';
+                
+                const selectHTML = isAdmin 
+                    ? `<select onchange="updateCompra(${idx}, 'capitan', this.value)">
+                           <option value="">-- Seleccionar --</option>
+                           ${capitanes.map(c => `<option value="${c.nombre}" ${compra.capitan === c.nombre ? 'selected' : ''}>${c.nombre}</option>`).join('')}
+                       </select>`
+                    : `<span class="readonly-value">${compra.capitan || '-'}</span>`;
+                
+                const inputHTML = isAdmin
+                    ? `<input type="number" 
+                             value="${compra.precio || ''}" 
+                             placeholder="${j.base}"
+                             min="${j.base}"
+                             step="50000"
+                             onchange="updateCompra(${idx}, 'precio', this.value)">`
+                    : `<span class="readonly-value">${compra.precio ? '$' + formatNumber(compra.precio) : '-'}</span>`;
+
+                tbody.innerHTML += `
+                    <tr class="${vendido}">
+                        <td><strong>${j.nombre}</strong></td>
+                        <td class="nivel-${j.nivel}">${j.nivel}</td>
+                        <td class="asistencia-${j.asistencia.toLowerCase()}">${j.asistencia}</td>
+                        <td class="base">$${formatNumber(j.base)}</td>
+                        <td class="notas">${j.notas}</td>
+                        <td>${selectHTML}</td>
+                        <td>${inputHTML}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderCapitanes() {
+            const tbody = document.getElementById('capitanes-body');
+            tbody.innerHTML = '';
+            
+            let totalPresupuesto = 0;
+            let totalGastado = 0;
+            let totalComprados = 0;
+            let totalFaltan = 0;
+
+            capitanes.forEach(c => {
+                let gastado = 0;
+                let comprados = 0;
+                
+                Object.values(compras).forEach(compra => {
+                    if (compra.capitan === c.nombre && compra.precio > 0) {
+                        gastado += parseInt(compra.precio);
+                        comprados++;
+                    }
+                });
+                
+                const disponible = c.presupuesto - gastado;
+                const faltan = c.faltan - comprados;
+                const claseDisponible = disponible >= 0 ? 'positivo' : 'negativo';
+                
+                totalPresupuesto += c.presupuesto;
+                totalGastado += gastado;
+                totalComprados += comprados;
+                totalFaltan += Math.max(0, faltan);
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${c.nombre}</strong></td>
+                        <td>$${formatNumber(c.presupuesto)}</td>
+                        <td>$${formatNumber(gastado)}</td>
+                        <td class="${claseDisponible}">$${formatNumber(disponible)}</td>
+                        <td>${comprados}</td>
+                        <td>${faltan > 0 ? faltan : '✅'}</td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('total-presupuesto').textContent = `$${formatNumber(totalPresupuesto)}`;
+            document.getElementById('total-gastado').textContent = `$${formatNumber(totalGastado)}`;
+            document.getElementById('total-disponible').textContent = `$${formatNumber(totalPresupuesto - totalGastado)}`;
+            document.getElementById('total-comprados').textContent = totalComprados;
+            document.getElementById('total-faltan').textContent = totalFaltan > 0 ? totalFaltan : '✅';
+        }
+
+        function updateCompra(idx, field, value) {
+            if (!compras[idx]) {
+                compras[idx] = { capitan: '', precio: 0 };
+            }
+            
+            if (field === 'precio') {
+                compras[idx][field] = parseInt(value) || 0;
+            } else {
+                compras[idx][field] = value;
+            }
+            
+            // Guardar en Firebase (se sincroniza automáticamente)
+            comprasRef.child(idx).set(compras[idx]);
+        }
+
+        function resetSubasta() {
+            if (confirm('¿Estás seguro de reiniciar la subasta? Se borrarán todas las compras.')) {
+                comprasRef.remove();
+            }
+        }
+
+        // Render inicial
+        renderJugadores();
+        renderCapitanes();
+    </script>
+</body>
+</html>
