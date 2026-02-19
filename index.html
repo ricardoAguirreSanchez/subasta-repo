@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subasta Ping Pong</title>
+    <title>Subasta 4F 2026</title>
     <style>
         * {
             box-sizing: border-box;
@@ -113,20 +113,6 @@
         .is-admin .admin-only {
             display: inline-block;
         }
-        .espectador-badge {
-            background: #e74c3c;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            margin-left: 10px;
-        }
-        .espectador-badge.online {
-            background: #27ae60;
-        }
-        .espectador-badge.online .live-indicator {
-            background: #2ecc71;
-        }
         .admin-badge {
             background: #27ae60;
             color: white;
@@ -226,7 +212,7 @@
                 top: 8px;
                 right: 8px;
             }
-            .espectador-badge, .admin-badge {
+            .admin-badge {
                 font-size: 0.8em;
                 padding: 4px 10px;
             }
@@ -246,7 +232,7 @@
     <div id="sync-status" class="sync-status sync-offline">Conectando...</div>
     
     <div class="container">
-        <h1>🏓 Subasta Ping Pong <span id="mode-badge"></span></h1>
+        <h1>🏓 Subasta 4F 2026 <span id="mode-badge"></span></h1>
         
         <h2>Jugadores a Subastar</h2>
         <div class="table-wrapper">
@@ -349,7 +335,7 @@
             resetBtn.textContent = '🔄 Reiniciar Subasta';
             adminActions.appendChild(resetBtn);
         } else {
-            document.getElementById('mode-badge').innerHTML = '<span class="espectador-badge"><span class="live-indicator"></span>EN VIVO</span>';
+            document.getElementById('mode-badge').innerHTML = '';
         }
 
         // Escuchar cambios en tiempo real
@@ -373,10 +359,6 @@
             } else {
                 el.className = 'sync-status sync-offline';
                 el.textContent = '❌ Desconectado';
-            }
-            if (!isAdmin) {
-                const span = document.querySelector('#mode-badge .espectador-badge');
-                if (span) span.classList.toggle('online', !!online);
             }
         }
 
