@@ -121,6 +121,12 @@
             font-size: 0.9em;
             margin-left: 10px;
         }
+        .espectador-badge.online {
+            background: #27ae60;
+        }
+        .espectador-badge.online .live-indicator {
+            background: #2ecc71;
+        }
         .admin-badge {
             background: #27ae60;
             color: white;
@@ -298,6 +304,10 @@
             } else {
                 el.className = 'sync-status sync-offline';
                 el.textContent = '❌ Desconectado';
+            }
+            if (!isAdmin) {
+                const span = document.querySelector('#mode-badge .espectador-badge');
+                if (span) span.classList.toggle('online', !!online);
             }
         }
 
